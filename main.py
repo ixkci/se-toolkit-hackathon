@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sqlalchemy import create_engine, Column, Integer, String, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, func
 from sqlalchemy.orm import declarative_base, sessionmaker
 import uvicorn
 
@@ -36,10 +36,10 @@ class ItemCreate(BaseModel):
 @app.get("/items/")
 def get_items():
     db = SessionLocal()
-    # Сортируем: сначала срочные (desc), затем по имени (asc)
     items = db.query(GroceryItem).order_by(
-        GroceryItem.is_urgent.desc(), 
-        GroceryItem.name.asc()
+        GroceryItem.is_bought.asc(),          # 1. Некупленные выше купленных
+        GroceryItem.is_urgent.desc(),         # 2. Срочные выше обычных
+        func.lower(GroceryItem.name).asc()    # 3. По алфавиту без учета регистра (А = а)
     ).all()
     db.close()
     return items
