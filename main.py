@@ -15,6 +15,7 @@ class GroceryItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     is_bought = Column(Boolean, default=False)
+    is_urgent = Column(Boolean, default=False)
 
 Base.metadata.create_all(bind=engine)
 
@@ -30,6 +31,7 @@ app.add_middleware(
 
 class ItemCreate(BaseModel):
     name: str
+    is_urgent: bool = False
 
 @app.get("/items/")
 def get_items():
@@ -41,7 +43,7 @@ def get_items():
 @app.post("/items/")
 def add_item(item: ItemCreate):
     db = SessionLocal()
-    new_item = GroceryItem(name=item.name)
+    new_item = GroceryItem(name=item.name, is_urgent=item.is_urgent)
     db.add(new_item)
     db.commit()
     db.refresh(new_item)
@@ -58,6 +60,16 @@ def toggle_item_status(item_id: int):
         db.refresh(item)
     db.close()
     return item
+
+@app.delete("/items/{item_id}")
+def delete_item(item_id: int):
+    db = SessionLocal()
+    item = db.query(GroceryItem).filter(GroceryItem.id == item_id).first()
+    if item:
+        db.delete(item)
+        db.commit()
+    db.close()
+    return {"message": "Item deleted"}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

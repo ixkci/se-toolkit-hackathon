@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Shared Fridge</title>
+    <!-- Подключаем Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .bought-text { text-decoration: line-through; color: #9ca3af; }
@@ -13,18 +14,29 @@
     <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
         <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Shared Fridge 🛒</h1>
         
-        <form id="add-form" class="mb-6 flex gap-2">
-            <input type="text" id="item-name" placeholder="Add missing item..." required
-                class="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition font-medium">
-                Add
-            </button>
+        <!-- Форма добавления нового продукта -->
+        <form id="add-form" class="mb-6 flex flex-col gap-3">
+            <div class="flex gap-2">
+                <input type="text" id="item-name" placeholder="What do we need?" required
+                    class="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition font-medium">
+                    Add
+                </button>
+            </div>
+            <!-- Галочка для отметки продукта как срочного -->
+            <label class="flex items-center gap-2 text-sm text-red-600 font-medium cursor-pointer w-max">
+                <input type="checkbox" id="item-urgent" class="w-4 h-4 text-red-600 rounded focus:ring-red-500 border-gray-300 cursor-pointer">
+                🚨 Mark as Urgent
+            </label>
         </form>
 
-        <ul id="items-list" class="space-y-3"></ul>
+        <!-- Список продуктов -->
+        <ul id="items-list" class="space-y-3">
+            <!-- Элементы будут добавляться сюда через JS -->
+        </ul>
     </div>
 
-    <script>
+        <script>
         const API_URL = 'http://127.0.0.1:8000/items/';
 
         async function fetchItems() {
@@ -39,34 +51,58 @@
 
         function renderItems(items) {
             const list = document.getElementById('items-list');
-            list.innerHTML = '';
+            list.innerHTML = ''; 
+
             items.forEach(item => {
                 const li = document.createElement('li');
-                li.className = 'flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100';
+                
+                const isUrgentActive = item.is_urgent && !item.is_bought;
+                const bgClass = isUrgentActive ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-100';
+                
+                li.className = `flex items-center justify-between p-3 rounded-lg border ${bgClass} transition-colors duration-200`;
+                
                 const textClass = item.is_bought ? 'bought-text font-medium' : 'font-medium text-gray-700';
                 const checked = item.is_bought ? 'checked' : '';
+                
+                const urgentIcon = item.is_urgent ? '<span class="text-red-500 ml-2" title="Urgent">🚨</span>' : '';
+
+                // Добавлена кнопка удаления справа 
                 li.innerHTML = `
-                    <input type="checkbox" ${checked} onchange="toggleItem(${item.id})" 
-                        class="w-5 h-5 text-blue-600 rounded cursor-pointer">
-                    <span class="${textClass}">${item.name}</span>
+                    <div class="flex items-center gap-3 w-full justify-between">
+                        <div class="flex items-center gap-3 w-full">
+                            <input type="checkbox" ${checked} onchange="toggleItem(${item.id})" 
+                                class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer">
+                            <span class="${textClass} flex-1 break-words">${item.name} ${urgentIcon}</span>
+                        </div>
+                        <button onclick="deleteItem(${item.id})" class="text-gray-400 hover:text-red-500 transition-colors px-2 py-1" title="Delete item">
+                            🗑️
+                        </button>
+                    </div>
                 `;
                 list.appendChild(li);
             });
         }
 
         document.getElementById('add-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const input = document.getElementById('item-name');
-            const name = input.value.trim();
+            e.preventDefault(); 
+            const inputName = document.getElementById('item-name');
+            const inputUrgent = document.getElementById('item-urgent');
+            
+            const name = inputName.value.trim();
+            const isUrgent = inputUrgent.checked;
+
             if (!name) return;
+
             try {
                 await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: name })
+                    body: JSON.stringify({ name: name, is_urgent: isUrgent })
                 });
-                input.value = '';
-                fetchItems();
+                
+                inputName.value = ''; 
+                inputUrgent.checked = false; 
+                fetchItems();     
             } catch (error) {
                 console.error("Error adding item:", error);
             }
@@ -75,9 +111,22 @@
         async function toggleItem(id) {
             try {
                 await fetch(`${API_URL}${id}/toggle`, { method: 'PUT' });
-                fetchItems();
+                fetchItems(); 
             } catch (error) {
-                console.error("Error toggling item:", error);
+                console.error("Error toggling item status:", error);
+            }
+        }
+
+        // НОВАЯ ФУНКЦИЯ ДЛЯ УДАЛЕНИЯ ПРОДУКТА
+        async function deleteItem(id) {
+            // Подтверждение перед удалением (чтобы случайно не нажать)
+            if (!confirm("Are you sure you want to delete this item?")) return;
+
+            try {
+                await fetch(`${API_URL}${id}`, { method: 'DELETE' });
+                fetchItems(); 
+            } catch (error) {
+                console.error("Error deleting item:", error);
             }
         }
 
