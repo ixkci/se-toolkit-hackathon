@@ -54,12 +54,12 @@ def add_item(item: ItemCreate):
     db.close()
     return new_item
 
-@app.put("/items/{item_id}/toggle")
-def toggle_item_status(item_id: int):
+@app.put("/items/{item_id}/toggle-urgent")
+def toggle_item_urgency(item_id: int):
     db = SessionLocal()
     item = db.query(GroceryItem).filter(GroceryItem.id == item_id).first()
     if item:
-        item.is_bought = not item.is_bought
+        item.is_urgent = not item.is_urgent
         db.commit()
         db.refresh(item)
     db.close()
