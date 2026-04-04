@@ -64,7 +64,8 @@
                 const textClass = item.is_bought ? 'bought-text font-medium' : 'font-medium text-gray-700';
                 const checked = item.is_bought ? 'checked' : '';
                 
-                const urgentIcon = item.is_urgent ? '<span class="text-red-500 ml-2" title="Urgent">🚨</span>' : '';
+                const urgentClass = item.is_urgent ? 'text-red-500 opacity-100' : 'grayscale opacity-30 hover:opacity-100 hover:grayscale-0';
+                const urgentIcon = `<button onclick="toggleUrgency(${item.id})" class="ml-2 transition-all duration-200 ${urgentClass}" title="Toggle Urgency">🚨</button>`;
 
                 // Добавлена кнопка удаления справа 
                 li.innerHTML = `
@@ -114,6 +115,16 @@
                 fetchItems(); 
             } catch (error) {
                 console.error("Error toggling item status:", error);
+            }
+        }
+
+                // НОВАЯ ФУНКЦИЯ ДЛЯ ПЕРЕКЛЮЧЕНИЯ СРОЧНОСТИ
+        async function toggleUrgency(id) {
+            try {
+                await fetch(`${API_URL}${id}/toggle-urgent`, { method: 'PUT' });
+                fetchItems(); // Обновляем список, чтобы применилась новая сортировка и стили
+            } catch (error) {
+                console.error("Error toggling item urgency:", error);
             }
         }
 
