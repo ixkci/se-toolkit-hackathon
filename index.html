@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Shared Fridge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bought-text { text-decoration: line-through; color: #9ca3af; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-8 font-sans">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
+        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Shared Fridge 🛒</h1>
+        
+        <form id="add-form" class="mb-6 flex gap-2">
+            <input type="text" id="item-name" placeholder="Add missing item..." required
+                class="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition font-medium">
+                Add
+            </button>
+        </form>
+
+        <ul id="items-list" class="space-y-3"></ul>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000/items/';
+
+        async function fetchItems() {
+            try {
+                const response = await fetch(API_URL);
+                const items = await response.json();
+                renderItems(items);
+            } catch (error) {
+                console.error("Error fetching items:", error);
+            }
+        }
+
+        function renderItems(items) {
+            const list = document.getElementById('items-list');
+            list.innerHTML = '';
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100';
+                const textClass = item.is_bought ? 'bought-text font-medium' : 'font-medium text-gray-700';
+                const checked = item.is_bought ? 'checked' : '';
+                li.innerHTML = `
+                    <input type="checkbox" ${checked} onchange="toggleItem(${item.id})" 
+                        class="w-5 h-5 text-blue-600 rounded cursor-pointer">
+                    <span class="${textClass}">${item.name}</span>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        document.getElementById('add-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('item-name');
+            const name = input.value.trim();
+            if (!name) return;
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name })
+                });
+                input.value = '';
+                fetchItems();
+            } catch (error) {
+                console.error("Error adding item:", error);
+            }
+        });
+
+        async function toggleItem(id) {
+            try {
+                await fetch(`${API_URL}${id}/toggle`, { method: 'PUT' });
+                fetchItems();
+            } catch (error) {
+                console.error("Error toggling item:", error);
+            }
+        }
+
+        fetchItems();
+    </script>
+</body>
+</html>

@@ -18,7 +18,7 @@ class GroceryItem(Base):
 
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Shared Fridge API")
+app = FastAPI(title="Smart Fridge API")
 
 app.add_middleware(
     CORSMiddleware,
