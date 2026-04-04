@@ -36,7 +36,11 @@ class ItemCreate(BaseModel):
 @app.get("/items/")
 def get_items():
     db = SessionLocal()
-    items = db.query(GroceryItem).all()
+    # Сортируем: сначала срочные (desc), затем по имени (asc)
+    items = db.query(GroceryItem).order_by(
+        GroceryItem.is_urgent.desc(), 
+        GroceryItem.name.asc()
+    ).all()
     db.close()
     return items
 
