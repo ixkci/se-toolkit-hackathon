@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Shared Fridge</title>
     <!-- Подключаем Tailwind CSS -->
+     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛒</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .bought-text { text-decoration: line-through; color: #9ca3af; }
@@ -37,7 +38,7 @@
     </div>
 
         <script>
-        const API_URL = 'http://10.93.25.96:8000/items/';
+        const API_URL = 'http://localhost:8000/items/';
 
         async function fetchItems() {
             try {
@@ -52,10 +53,11 @@
         function renderItems(items) {
             const list = document.getElementById('items-list');
             list.innerHTML = ''; 
-
+                
             items.forEach(item => {
                 const li = document.createElement('li');
                 
+                // Логика подсветки: краснеет только если срочно И еще не куплено
                 const isUrgentActive = item.is_urgent && !item.is_bought;
                 const bgClass = isUrgentActive ? 'bg-red-50 border-red-200' : 'bg-gray-50 border-gray-100';
                 
@@ -64,18 +66,22 @@
                 const textClass = item.is_bought ? 'bought-text font-medium' : 'font-medium text-gray-700';
                 const checked = item.is_bought ? 'checked' : '';
                 
-                const urgentClass = item.is_urgent ? 'text-red-500 opacity-100' : 'grayscale opacity-30 hover:opacity-100 hover:grayscale-0';
-                const urgentIcon = `<button onclick="toggleUrgency(${item.id})" class="ml-2 transition-all duration-200 ${urgentClass}" title="Toggle Urgency">🚨</button>`;
-
-                // Добавлена кнопка удаления справа 
+                // Улучшенные стили для иконки (полупрозрачная серая, если не срочно)
+                const urgentClass = item.is_urgent ? 'opacity-100 drop-shadow-md' : 'opacity-30 hover:opacity-100 grayscale';
+            
+                // Разносим текст и кнопки по разным блокам (Left: Checkbox+Text, Right: Urgent+Delete)
                 li.innerHTML = `
-                    <div class="flex items-center gap-3 w-full justify-between">
-                        <div class="flex items-center gap-3 w-full">
-                            <input type="checkbox" ${checked} onchange="toggleItem(${item.id})" 
-                                class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer">
-                            <span class="${textClass} flex-1 break-words">${item.name} ${urgentIcon}</span>
-                        </div>
-                        <button onclick="deleteItem(${item.id})" class="text-gray-400 hover:text-red-500 transition-colors px-2 py-1" title="Delete item">
+                    <div class="flex items-center gap-3 flex-1 overflow-hidden">
+                        <input type="checkbox" ${checked} onchange="toggleItem(${item.id})" 
+                            class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer shrink-0">
+                        <span class="${textClass} truncate">${item.name}</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-1 shrink-0 ml-3">
+                        <button onclick="toggleUrgency(${item.id})" class="text-xl px-2 py-1 transition-all duration-200 ${urgentClass}" title="Mark as Urgent">
+                            🚨
+                        </button>
+                        <button onclick="deleteItem(${item.id})" class="text-gray-400 hover:text-red-500 transition-colors px-2 py-1 text-xl" title="Delete item">
                             🗑️
                         </button>
                     </div>
