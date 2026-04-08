@@ -1,21 +1,14 @@
-version: '3.8'
-
 services:
   backend:
     build: .
-    container_name: fridge-backend
     ports:
       - "8000:8000"
-    volumes:
-      # Пробрасываем базу данных, чтобы она не удалялась при перезапуске
-      - ./fridge.db:/app/fridge.db
-      - ./main.py:/app/main.py
+    restart: always
 
   frontend:
     image: nginx:alpine
-    container_name: fridge-frontend
+    volumes:
+      - ./index.html:/usr/share/nginx/html/index.html:ro
     ports:
       - "8080:80"
-    volumes:
-      # Nginx будет брать твой index.html прямо из папки
-      - ./index.html:/usr/share/nginx/html/index.html
+    restart: always
