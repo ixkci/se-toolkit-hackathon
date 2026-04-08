@@ -9,6 +9,7 @@ services:
     volumes:
       # Пробрасываем базу данных, чтобы она не удалялась при перезапуске
       - ./fridge.db:/app/fridge.db
+      - ./main.py:/app/main.py
 
   frontend:
     image: nginx:alpine
