@@ -5,7 +5,6 @@ A fast, real-time, fridge-themed grocery manager for shared households to track 
 ## Demo
 ![alt text](image.png)
 
-![alt text](image-1.png)
 
 ## Product Context
 
